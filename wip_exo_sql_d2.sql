@@ -124,12 +124,6 @@ from (
 join categories c on (c.category_id = subquery.category_id)
 where rank < 4;
 
-select
-    c.category_name,
-
-from order_details od
-join products p on (p.product_id = od.product_id)
-join categories c on (c.category_id = p.category_id)
 
 
 

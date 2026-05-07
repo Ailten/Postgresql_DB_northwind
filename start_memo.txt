@@ -1,0 +1,110 @@
+
+-- create a db.
+CREATE DATABASE Demo;
+
+-- delete a db.
+DROP DATABASE Demo;
+
+-- checkout a db.
+\Demo;
+
+-- create a table.
+CREATE TABLE student (
+    id uuid, -- INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    birth_date DATE,
+    login VARCHAR(50),
+    years_study int,
+
+    CONSTRAINT unique_name UNIQUE(first_name, last_name),
+    PRIMARY KEY (id)
+
+);
+
+-- delete a table.
+DROP TABLE student;
+
+-- make an enum.
+CREATE TYPE gender AS enum('MALE', 'FEMALE', 'OTHER');
+
+-- make a type.
+CREATE DOMAIN elo AS INT check(VALUE BETWEEN 0 and 3000);
+
+
+
+
+-- create chest tournament tables.
+CREATE TYPE gender AS enum('MALE', 'FEMALE', 'OTHER');
+CREATE DOMAIN elo AS INT check(VALUE BETWEEN 0 and 3000);
+create table player (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    first_name varchar(63) not null,
+    last_name varchar(63) not null,
+    birth_date date not null,
+    login VARCHAR(63) not null,
+    password VARCHAR(63) not null,  -- hashed.
+    elo elo not null default 1200,
+    email varchar(320) not null,
+    gender gender not null default 'OTHER'  -- enum.
+
+    --constraint pk primary key(id)  -- already set in id declaration.
+    --constraint min_elo check(elo >= 1200)  -- moved in type elo.
+    --constraint min_age check(birth_date < current_date)
+
+);
+
+insert into player(id, first_name, last_name, birth_date, login, password, email) values
+(00000000-0000-0000-0000-000000000000, '', '', now(), '', '_|', '');
+
+CREATE TYPE tournament_category AS enum('Junior', 'Senior', 'Veteran');
+CREATE TYPE tournament_status AS enum('Waiting for players', 'In progress', 'Completed');
+create table tournament (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    name varchar(63) not null,
+    location varchar(120) not null,
+    min_player_allow smallint default 2 not null check(min_player_allow between 2 and 32),
+    max_player_allow smallint not null check(max_player_allow between 2 and 32),
+    min_elo_allow smallint default 0 not null,  -- 1200 min.
+    max_elo_allow smallint not null,
+    category tournament_category not null,  -- can allow many different ? (use flag).
+    status tournament_status default 'Waiting for players' not null,
+    current_round smallint default 0 not null,
+    is_women_only bool default False not null,
+    date date not null,
+
+    --constraint pk primary key(id)  -- already set in id declaration.
+    constraint ck_players check(min_player_allow <= max_player_allow)
+);
+
+CREATE TYPE registration_status AS enum('registered', 'cancel');
+create table registration (
+    id_player uuid not null references player(id) on delete cascade,
+    id_tournament uuid not null references tournament(id) on delete cascade,
+
+    registration_date timestamptz default now() not null,
+    status registration_status default 'registered' not null,
+
+    constraint pk primary key (id_player, id_tournament)
+    --constraint unique_register unique(id_player, id_tournament, status)
+    --constraint tounrament_started_yet check()  -- to complicated (need a select).
+
+);
+
+CREATE TYPE matchup_status AS enum('in cour', 'white win', 'black win', 'draw', 'cancel');
+create table matchup (
+    id uuid primary key default gen_random_uuid(),
+
+    id_tournament uuid not null references tournament(id) on delete cascade,
+    id_player_white uuid default 00000000-0000-0000-0000-000000000000 references player(id) on delete set default,  -- need to create a fake user.
+    id_player_black uuid default 00000000-0000-0000-0000-000000000000 references player(id) on delete set default,
+
+    matchup_date timestamptz default now() not null,
+    status matchup_status default 'in cour' not null
+
+    --constraint self_match check(id_player_white != id_player_black)
+
+);
+

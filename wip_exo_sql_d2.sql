@@ -84,8 +84,8 @@ order by o.required_date;
 -- 1.
 select
     c.customer_id,
-    max(o.order_date) over(partition by c.customer_id) as last_order_date,
-    lag(o.order_date) over(partition by c.customer_id) as previous_order_date
+    o.order_date,
+    lag(o.order_date) over(partition by c.customer_id order by o.order_date) as previous_order_date
 from customers c
 join orders o on (o.customer_id = c.customer_id)
 order by c.customer_id;
@@ -123,6 +123,9 @@ from (
 ) as subquery
 join categories c on (c.category_id = subquery.category_id)
 where rank < 4;
+
+
+
 
 
 

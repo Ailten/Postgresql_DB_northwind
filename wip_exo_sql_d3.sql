@@ -113,7 +113,7 @@ select
 from products p;
 
 
--- p2 -->
+-- PART 2 ------------------------------------------------------------ -->
 
 -- level 1.
 
@@ -260,7 +260,7 @@ with recursive hierarchy_path_cte as (
 )
 select * from hierarchy_path_cte;
 
--- 3.
+-- 3. (X)
 select
     om2.order_month,
     om2.totale_sale_month,
@@ -280,4 +280,19 @@ from (
     ) om
     group by om.order_month
     order by om.order_month
-) om2
+) om2;
+
+-- 3 correction.
+with total_sales_per_month as (
+    select
+        date_part('YEAR', o.order_date) as year,
+        date_part('MONTH', o.order_date) as month,
+        sum(od.unit_price * od.quantity) as total
+    from order_details od
+    join orders o on (o.order_id = od.order_id)
+    group by year, month
+    order by year, month
+) select
+    *,
+    (total / lag(total) over(order by year, month) - 1.0) * 100 as increase
+from total_sales_per_month;

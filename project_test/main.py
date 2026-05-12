@@ -2,7 +2,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import os
 from dotenv import load_dotenv
-from .'.venv'.src.models.products import Products
+from .'.venv'.src.models.products import Product
 
 
 load_dotenv()
